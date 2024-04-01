@@ -183,6 +183,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CConstantDialog.h" />
     <ClInclude Include="ColorImageProcess.h" />
     <ClInclude Include="ColorImageProcessDoc.h" />
     <ClInclude Include="ColorImageProcessView.h" />
@@ -193,6 +194,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CConstantDialog.cpp" />
     <ClCompile Include="ColorImageProcess.cpp" />
     <ClCompile Include="ColorImageProcessDoc.cpp" />
     <ClCompile Include="ColorImageProcessView.cpp" />

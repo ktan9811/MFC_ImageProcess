@@ -29,6 +29,15 @@ BEGIN_MESSAGE_MAP(CColorImageProcessView, CView)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
 	ON_COMMAND(ID_EqualImage, &CColorImageProcessView::OnEqualmage)
 	ON_COMMAND(ID_GrayScale, &CColorImageProcessView::OnGrayScale)
+	ON_COMMAND(ID_Change_Hue, &CColorImageProcessView::OnChangeHue)
+	ON_COMMAND(ID_Change_Saturation, &CColorImageProcessView::OnChangeSaturation)
+	ON_COMMAND(ID_Change_Intensity, &CColorImageProcessView::OnChangeIntensity)
+	ON_COMMAND(ID_Add_Image, &CColorImageProcessView::OnAddImage)
+	ON_COMMAND(ID_Inverse_Image, &CColorImageProcessView::OnInverseImage)
+	ON_COMMAND(ID_Image_Gamma, &CColorImageProcessView::OnImageGamma)
+	ON_COMMAND(ID_Rotate_By_Degree, &CColorImageProcessView::OnRotateByDegree)
+	ON_COMMAND(ID_Zoom_In, &CColorImageProcessView::OnZoomIn)
+	ON_COMMAND(ID_Zoom_Out, &CColorImageProcessView::OnZoomOut)
 END_MESSAGE_MAP()
 
 // CColorImageProcessView 생성/소멸
@@ -211,5 +220,104 @@ void CColorImageProcessView::OnGrayScale()
 	ASSERT_VALID(pDoc);
 
 	pDoc->OnGrayScale();
+	Invalidate(TRUE);
+}
+
+void CColorImageProcessView::OnAddImage()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnAddImage();
+	Invalidate(TRUE);
+}
+
+
+
+void CColorImageProcessView::OnChangeHue()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnChangeHue();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnChangeSaturation()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnChangeSaturation();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnChangeIntensity()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int temp = pDoc->OnChangeIntensity();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnInverseImage()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnInverseImage();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnImageGamma()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnImageGamma();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnRotateByDegree()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnRotateByDegree();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnZoomIn()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnZoomIn();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnZoomOut()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnZoomOut();
 	Invalidate(TRUE);
 }

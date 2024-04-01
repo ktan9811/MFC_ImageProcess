@@ -14,6 +14,8 @@
 
 #include <propkey.h>
 
+#include "CConstantDialog.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -272,7 +274,7 @@ void CColorImageProcessDoc::OnEqualmage()
 	m_outW = m_inW;
 	OnMallocOutImage();
 
-	// ** 진짜 영상처리 알고리즘 **
+	// 영상처리 알고리즘
 	for (int i = 0; i < m_inH; i++) {
 		for (int k = 0; k < m_inW; k++) {
 			m_outImageR[i][k] = m_inImageR[i][k];
@@ -294,7 +296,7 @@ void CColorImageProcessDoc::OnGrayScale()
 	m_outW = m_inW;
 	OnMallocOutImage();
 
-	// ** 진짜 영상처리 알고리즘 **
+	// 영상처리 알고리즘
 	double avg;
 	for (int i = 0; i < m_inH; i++) {
 		for (int k = 0; k < m_inW; k++) {
@@ -304,3 +306,410 @@ void CColorImageProcessDoc::OnGrayScale()
 	}
 }
 
+
+
+double* CColorImageProcessDoc::RGB2HSI(int R, int G, int B)
+{
+	// TODO: 여기에 구현 코드 추가.
+	double H, S, I;
+	double* HSI = new double[3];
+	double min_value, angle;
+	I = (R + G + B) / 3.0; // 밝기
+	if ((R == G) && (G == B)) { // 그레이
+		S = 0.0;
+		H = 0.0;
+	}
+	else {
+
+		min_value = min(min(R, G), B); //최소값 추출
+		angle = (R - 0.5 * G - 0.5 * B) / (double)sqrt((R - G) * (R - G) + (R - B) * (G - B));
+
+		H = (double)acos(angle) * 57.29577951;
+		S = 1.0f - (3.0 / (R + G + B)) * min_value;
+	}
+	if (B > G) H = 360. - H;
+
+	HSI[0] = H;
+	HSI[1] = S;
+	HSI[2] = I;
+
+	return HSI;
+}
+
+
+unsigned char* CColorImageProcessDoc::HSI2RGB(double H, double S, double I)
+{
+	// TODO: 여기에 구현 코드 추가.
+	double R, G, B;
+	unsigned char* RGB = new unsigned char[3];
+
+	double angle1, angle2, scale;
+
+	if (I == 0.0) { // Black
+		RGB[0] = 0;
+		RGB[1] = 0;
+		RGB[2] = 0;
+		return RGB;
+	}
+
+	if (H <= 0.0) H += 360.0f;
+
+	scale = 3.0 * I;
+	if (H <= 120.0)
+	{
+		angle1 = H * 0.017453293;
+		angle2 = (60.0 - H) * 0.017453293;
+		B = (1.0 - S) / 3.0f;
+		R = (double)(1.0 + (S * cos(angle1) / cos(angle2))) / 3.0;
+		G = 1.0 - R - B;
+		B *= scale;
+		R *= scale;
+		G *= scale;
+	}
+
+
+	else if ((H > 120.0) && (H <= 240.0)) {
+		H -= 120.0;
+		angle1 = H * 0.017453293;
+
+		angle2 = (60.0 - H) * 0.017453293;
+		R = (1.0 - S) / 3.0;
+		G = (double)(1.0f + (S * cos(angle1) / cos(angle2))) / 3.0;
+		B = 1.0 - R - G;
+		R *= scale;
+		G *= scale;
+		B *= scale;
+	}
+	else {
+		H -= 240.0;
+		angle1 = H * 0.017453293;
+		angle2 = (60.0 - H) * 0.017453293;
+		G = (1.0f - S) / 3.0;
+		B = (double)(1.0 + (S * cos(angle1) / cos(angle2))) / 3.0;
+		R = 1.0 - G - B;
+
+		R *= scale;
+		G *= scale;
+		B *= scale;
+	}
+
+	RGB[0] = (unsigned char)R;
+	RGB[1] = (unsigned char)G;
+	RGB[2] = (unsigned char)B;
+	return RGB;
+}
+
+
+void CColorImageProcessDoc::OnChangeSaturation()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 기존 메모리 해제
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return;
+	double val = dlg.m_constant;
+
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	// 메모리 할당
+	OnMallocOutImage();
+	// ** 진짜 영상처리 알고리즘 **
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			// HIS 모델 값
+			// H(색상) : 0~360
+			// S(채도) : 0.0 ~ 1.0
+			// I(명도) : 0 ~ 255
+
+			// RGB --> HSI
+			double H, S, I;
+			unsigned char R, G, B;
+			R = m_inImageR[i][k];
+			G = m_inImageG[i][k];
+			B = m_inImageB[i][k];
+
+			double* hsi = RGB2HSI(R, G, B);
+			H = hsi[0];	S = hsi[1];	I = hsi[2];
+
+			/// 채도 조정
+			S = S + val;
+			if (S < 0) S = 0.0;
+			else if (S > 0.99) S = 0.99;
+
+			// HSI --> RGB
+			unsigned char* rgb = HSI2RGB(H, S, I);
+			R = rgb[0]; G = rgb[1]; B = rgb[2];
+
+			m_outImageR[i][k] = R;
+			m_outImageG[i][k] = G;
+			m_outImageB[i][k] = B;
+		}
+	}
+}
+
+int CColorImageProcessDoc::OnChangeIntensity()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 기존 메모리 해제
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return 0;
+	double val = dlg.m_constant;
+
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	// 메모리 할당
+	OnMallocOutImage();
+	// ** 진짜 영상처리 알고리즘 **
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			// HIS 모델 값
+			// H(색상) : 0~360
+			// S(채도) : 0.0 ~ 1.0
+			// I(명도) : 0 ~ 255
+
+			// RGB --> HSI
+			double H, S, I;
+			unsigned char R, G, B;
+			R = m_inImageR[i][k];
+			G = m_inImageG[i][k];
+			B = m_inImageB[i][k];
+
+			double* hsi = RGB2HSI(R, G, B);
+			H = hsi[0];	S = hsi[1];	I = hsi[2];
+
+			/// I 조정
+			I = I + val;
+			if (I < 0) I = 0.0;
+			else if (I > 254.0) I = 254.0;
+
+			// HSI --> RGB
+			unsigned char* rgb = HSI2RGB(H, S, I);
+			R = rgb[0]; G = rgb[1]; B = rgb[2];
+
+			m_outImageR[i][k] = R;
+			m_outImageG[i][k] = G;
+			m_outImageB[i][k] = B;
+		}
+	}
+	return 0;
+}
+
+
+void CColorImageProcessDoc::OnChangeHue()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 기존 메모리 해제
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return;
+	double val = dlg.m_constant;
+
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	// 메모리 할당
+	OnMallocOutImage();
+	// ** 진짜 영상처리 알고리즘 **
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			// HIS 모델 값
+			// H(색상) : 0~360
+			// S(채도) : 0.0 ~ 1.0
+			// I(명도) : 0 ~ 255
+
+			// RGB --> HSI
+			double H, S, I;
+			unsigned char R, G, B;
+			R = m_inImageR[i][k];
+			G = m_inImageG[i][k];
+			B = m_inImageB[i][k];
+
+			double* hsi = RGB2HSI(R, G, B);
+			H = hsi[0];	S = hsi[1];	I = hsi[2];
+
+			/// H 조정
+			H = H + val;
+			if (H < 0) H = 0.0 + 360.0;
+			else if (H > 360.0) H = H - 360.0;
+
+			// HSI --> RGB
+			unsigned char* rgb = HSI2RGB(H, S, I);
+			R = rgb[0]; G = rgb[1]; B = rgb[2];
+
+			m_outImageR[i][k] = R;
+			m_outImageG[i][k] = G;
+			m_outImageB[i][k] = B;
+		}
+	}
+}
+
+
+void CColorImageProcessDoc::OnAddImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	
+	// 입력값 받기
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return;
+	int val = int(dlg.m_constant);
+	
+
+	// 기존 메모리 해제
+	OnFreeOutImage();
+
+	// 메모리 할당
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 영상처리 알고리즘
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			if (m_inImageR[i][k] + val > 255) m_outImageR[i][k] = 255;
+			else if (m_inImageR[i][k] + val < 0) m_outImageR[i][k] = 0;
+			else m_outImageR[i][k] = m_inImageR[i][k] + val;
+
+			if (m_inImageG[i][k] + val > 255) m_outImageG[i][k] = 255;
+			else if (m_inImageG[i][k] + val < 0) m_outImageG[i][k] = 0;
+			else m_outImageG[i][k] = m_inImageG[i][k] + val;
+
+			if (m_inImageB[i][k] + val > 255) m_outImageB[i][k] = 255;
+			else if (m_inImageB[i][k] + val < 0) m_outImageB[i][k] = 0;
+			else m_outImageB[i][k] = m_inImageB[i][k] + val;
+		}
+	}
+}
+
+
+void CColorImageProcessDoc::OnInverseImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 메모리 헤제
+	OnFreeOutImage();
+
+	// 메모리 할당
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 영상처리 알고리즘
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			m_outImageR[i][k] = 255 - m_inImageR[i][k];
+			m_outImageG[i][k] = 255 - m_inImageG[i][k];
+			m_outImageB[i][k] = 255 - m_inImageB[i][k];
+		}
+	}
+}
+
+
+void CColorImageProcessDoc::OnImageGamma()
+{
+	// TODO: 여기에 구현 코드 추가.
+
+	// 입력값 받기
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return;
+	double val = dlg.m_constant;
+
+
+	// 기존 메모리 해제
+	OnFreeOutImage();
+
+	// 메모리 할당
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 영상처리 알고리즘
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			m_outImageR[i][k] = (unsigned const)(255 * pow(m_inImageR[i][k] / 255.0f, val));
+			m_outImageG[i][k] = (unsigned const)(255 * pow(m_inImageG[i][k] / 255.0f, val));
+			m_outImageB[i][k] = (unsigned const)(255 * pow(m_inImageB[i][k] / 255.0f, val));
+		}
+	}
+}
+
+
+void CColorImageProcessDoc::OnRotateByDegree()
+{
+	// TODO: 여기에 구현 코드 추가.
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return;
+	double val = dlg.m_constant;
+
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			m_outImageR[y][x] = m_inImageR[y][x];
+			m_outImageG[y][x] = m_inImageG[y][x];
+			m_outImageB[y][x] = m_inImageB[y][x];
+		}
+	double radian = -val * 3.141592 / 180.0;
+
+	int cx = m_outH / 2;
+	int cy = m_outW / 2;
+
+	for (int y = 0; y < m_outH; y++) {
+		for (int x = 0; x < m_outW; x++) {
+			int xd = y;
+			int yd = x;
+
+			int xs = (int)(cos(radian) * (xd - cx) + sin(radian) * (yd - cy));
+			int ys = (int)(-sin(radian) * (xd - cx) + cos(radian) * (yd - cy));
+			xs += cx;
+			ys += cy;
+
+			if ((0 <= xs && xs < m_outH) && (0 <= ys && ys < m_outW))
+				m_outImageR[xd][yd] = m_inImageR[xs][ys];
+				m_outImageG[xd][yd] = m_inImageG[xs][ys];
+				m_outImageB[xd][yd] = m_inImageB[xs][ys];
+		}
+	}
+}
+
+
+void CColorImageProcessDoc::OnZoomIn()
+{
+	// TODO: 여기에 구현 코드 추가.
+	OnFreeOutImage();
+
+	m_outH = m_inH * 2;
+	m_outW = m_inW * 2;
+	OnMallocOutImage();
+
+	for (int i = 0; i < m_outH; i++)
+		for (int k = 0; k < m_outW; k++) {
+			m_outImageR[i][k] = m_inImageR[i/2][k/2];
+			m_outImageG[i][k] = m_inImageG[i/2][k/2];
+			m_outImageB[i][k] = m_inImageB[i/2][k/2];
+		}
+}
+
+
+void CColorImageProcessDoc::OnZoomOut()
+{
+	// TODO: 여기에 구현 코드 추가.
+	OnFreeOutImage();
+
+	m_outH = m_inH / 2;
+	m_outW = m_inW / 2;
+	OnMallocOutImage();
+
+	for (int i = 0; i < m_outH; i++)
+		for (int k = 0; k < m_outW; k++) {
+			m_outImageR[i][k] = m_inImageR[i * 2][k * 2];
+			m_outImageG[i][k] = m_inImageG[i * 2][k * 2];
+			m_outImageB[i][k] = m_inImageB[i * 2][k * 2];
+
+		}
+}

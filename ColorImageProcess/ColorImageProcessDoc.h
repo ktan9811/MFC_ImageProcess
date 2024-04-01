@@ -68,4 +68,15 @@ public:
 	void OnFreeOutImage();
 	void OnGrayScale();
 	void OnMallocOutImage();
+	double* RGB2HSI(int R, int G, int B);
+	unsigned char* HSI2RGB(double H, double S, double I);
+	void OnChangeSaturation();
+	void OnAddImage();
+	void OnInverseImage();
+	void OnImageGamma();
+	int OnChangeIntensity();
+	void OnChangeHue();
+	void OnRotateByDegree();
+	void OnZoomIn();
+	void OnZoomOut();
 };

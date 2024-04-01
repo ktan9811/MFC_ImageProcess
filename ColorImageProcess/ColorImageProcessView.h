@@ -43,6 +43,15 @@ protected:
 public:
 	afx_msg void OnEqualmage();
 	afx_msg void OnGrayScale();
+	afx_msg void OnChangeHue();
+	afx_msg void OnChangeSaturation();
+	afx_msg void OnChangeIntensity();
+	afx_msg void OnAddImage();
+	afx_msg void OnInverseImage();
+	afx_msg void OnImageGamma();
+	afx_msg void OnRotateByDegree();
+	afx_msg void OnZoomIn();
+	afx_msg void OnZoomOut();
 };
 
 #ifndef _DEBUG  // ColorImageProcessView.cpp의 디버그 버전
