@@ -6,7 +6,6 @@
 #define IDP_OLE_INIT_FAILED			100
 #define IDR_MAINFRAME				128
 #define IDR_ColorImageProcessTYPE				130
-#define ID_WINDOW_MANAGER			131
 
 // 다음은 새 개체에 사용할 기본값입니다.
 //
