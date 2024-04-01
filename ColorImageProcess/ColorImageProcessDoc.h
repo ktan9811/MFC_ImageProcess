@@ -45,4 +45,27 @@ protected:
 	// 검색 처리기에 대한 검색 콘텐츠를 설정하는 도우미 함수
 	void SetSearchContent(const CString& value);
 #endif // SHARED_HANDLERS
+public:
+	unsigned char** m_inImageR = NULL;
+	unsigned char** m_inImageG = NULL;
+	unsigned char** m_inImageB = NULL;
+
+	int m_inH = 0;
+	int m_inW = 0;
+
+	unsigned char** m_outImageR = NULL;
+	unsigned char** m_outImageG = NULL;
+	unsigned char** m_outImageB = NULL;
+
+	int m_outH = 0;
+	int m_outW = 0;
+	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+	void OnFree2D(unsigned char** memory, int h);
+	unsigned char** OnMalloc2D(int h, int w);
+	virtual void OnCloseDocument();
+	virtual BOOL OnSaveDocument(LPCTSTR lpszPathName);
+	void OnEqualmage();
+	void OnFreeOutImage();
+	void OnGrayScale();
+	void OnMallocOutImage();
 };

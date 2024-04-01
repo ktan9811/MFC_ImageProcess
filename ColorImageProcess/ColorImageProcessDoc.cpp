@@ -136,3 +136,171 @@ void CColorImageProcessDoc::Dump(CDumpContext& dc) const
 
 
 // CColorImageProcessDoc 명령
+
+
+BOOL CColorImageProcessDoc::OnOpenDocument(LPCTSTR lpszPathName)
+{
+	if (!CDocument::OnOpenDocument(lpszPathName))
+		return FALSE;
+
+	// 기존 메모리 해제
+	if (m_inImageR != NULL) {
+		OnFree2D(m_inImageR, m_inH);
+		OnFree2D(m_inImageG, m_inH);
+		OnFree2D(m_inImageB, m_inH);
+		m_inImageR = m_inImageG = m_inImageB = NULL;
+		m_inH = m_inW = 0;
+
+		OnFree2D(m_outImageR, m_outH);
+		OnFree2D(m_outImageG, m_outH);
+		OnFree2D(m_outImageB, m_outH);
+		m_outImageR = m_outImageG = m_outImageB = NULL;
+		m_outH = m_outW = 0;
+	}
+
+	// TODO:  여기에 특수화된 작성 코드를 추가합니다.
+	CImage image;
+	image.Load(lpszPathName);
+	// 입력 영상 크기 알아내기
+	m_inH = image.GetHeight();
+	m_inW = image.GetWidth();
+	// 메모리 할당
+	m_inImageR = OnMalloc2D(m_inH, m_inW);
+	m_inImageG = OnMalloc2D(m_inH, m_inW);
+	m_inImageB = OnMalloc2D(m_inH, m_inW);
+	// CImage의 객체값 --> 메모리
+	COLORREF  px;
+	for (int i = 0; i < m_inH; i++)
+		for (int k = 0; k < m_inW; k++) {
+			px = image.GetPixel(k, i);
+			m_inImageR[i][k] = GetRValue(px);
+			m_inImageG[i][k] = GetGValue(px);
+			m_inImageB[i][k] = GetBValue(px);
+		}
+
+	return TRUE;
+}
+
+void CColorImageProcessDoc::OnCloseDocument()
+{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+	OnFree2D(m_inImageR, m_inH);
+	OnFree2D(m_inImageG, m_inH);
+	OnFree2D(m_inImageB, m_inH);
+
+	OnFree2D(m_outImageR, m_outH);
+	OnFree2D(m_outImageG, m_outH);
+	OnFree2D(m_outImageB, m_outH);
+
+	CDocument::OnCloseDocument();
+}
+
+
+BOOL CColorImageProcessDoc::OnSaveDocument(LPCTSTR lpszPathName)
+{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+	if (m_outImageR == NULL)
+		return FALSE;
+	CImage image;
+	image.Create(m_outW, m_outH, 32);
+	unsigned char R, G, B;
+	COLORREF px;
+	for (int i = 0; i < m_outW; i++)
+		for (int k = 0; k < m_outH; k++) {
+			R = m_outImageR[k][i];
+			G = m_outImageG[k][i];
+			B = m_outImageB[k][i];
+			px = RGB(R, G, B);
+			image.SetPixel(i, k, px);
+		}
+	image.Save(lpszPathName, Gdiplus::ImageFormatPNG);
+	MessageBox(NULL, L"저장", L"성공", NULL);
+	return TRUE;
+}
+
+
+unsigned char** CColorImageProcessDoc::OnMalloc2D(int h, int w)
+{
+	// TODO: 여기에 구현 코드 추가.
+	unsigned char** memory;
+	memory = new unsigned char* [h];
+	for (int i = 0; i < h; i++)
+		memory[i] = new unsigned char[w];
+	return memory;
+}
+
+
+void CColorImageProcessDoc::OnFree2D(unsigned char** memory, int h)
+{
+	// TODO: 여기에 구현 코드 추가.
+	if (memory == NULL)
+		return;
+	for (int i = 0; i < h; i++)
+		delete memory[i];
+	delete[] memory;
+}
+
+void CColorImageProcessDoc::OnFreeOutImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	if (m_outImageR != NULL) {
+		OnFree2D(m_outImageR, m_outH);
+		OnFree2D(m_outImageG, m_outH);
+		OnFree2D(m_outImageB, m_outH);
+		m_outImageR = m_outImageG = m_outImageB = NULL;
+		m_outH = m_outW = 0;
+	}
+}
+
+void CColorImageProcessDoc::OnMallocOutImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	m_outImageR = OnMalloc2D(m_outH, m_outW);
+	m_outImageG = OnMalloc2D(m_outH, m_outW);
+	m_outImageB = OnMalloc2D(m_outH, m_outW);
+}
+
+
+void CColorImageProcessDoc::OnEqualmage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 기존 메모리 해제
+	OnFreeOutImage();
+
+	// 메모리 할당
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// ** 진짜 영상처리 알고리즘 **
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			m_outImageR[i][k] = m_inImageR[i][k];
+			m_outImageG[i][k] = m_inImageG[i][k];
+			m_outImageB[i][k] = m_inImageB[i][k];
+		}
+	}
+}
+
+
+void CColorImageProcessDoc::OnGrayScale()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 기존 메모리 해제
+	OnFreeOutImage();
+
+	// 메모리 할당
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// ** 진짜 영상처리 알고리즘 **
+	double avg;
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			avg = (m_inImageR[i][k] + m_inImageG[i][k] + m_inImageB[i][k]) / 3.0;
+			m_outImageR[i][k] = m_outImageG[i][k] = m_outImageB[i][k] = (unsigned char)avg;
+		}
+	}
+}
+
