@@ -73,7 +73,9 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 		return FALSE;
 	// TODO: CREATESTRUCT cs를 수정하여 여기에서
 	//  Window 클래스 또는 스타일을 수정합니다.
-
+	cs.lpszName = _T("KTAN_IMG_Process");        //제목 바꾸기
+	cs.style &= ~FWS_ADDTOTITLE;        //제목없음 없애기       
+	cs.style &= ~WS_THICKFRAME;
 	return TRUE;
 }
 

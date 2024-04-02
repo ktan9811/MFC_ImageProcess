@@ -49,16 +49,31 @@ public:
 	unsigned char** m_inImageR = NULL;
 	unsigned char** m_inImageG = NULL;
 	unsigned char** m_inImageB = NULL;
-
 	int m_inH = 0;
 	int m_inW = 0;
 
 	unsigned char** m_outImageR = NULL;
 	unsigned char** m_outImageG = NULL;
 	unsigned char** m_outImageB = NULL;
-
 	int m_outH = 0;
 	int m_outW = 0;
+
+	unsigned char** m_tempImageR = NULL;
+	unsigned char** m_tempImageG = NULL;
+	unsigned char** m_tempImageB = NULL;
+
+	int m_tempH = 0;
+	int m_tempW = 0;
+
+	double** m_mask = NULL;
+	int m_ksize = 0;
+
+	double** m_doubleImageR = NULL;
+	double** m_doubleImageG = NULL;
+	double** m_doubleImageB = NULL;
+	int m_dimH = 0;
+	int m_dimW = 0;
+
 	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
 	void OnFree2D(unsigned char** memory, int h);
 	unsigned char** OnMalloc2D(int h, int w);
@@ -79,4 +94,26 @@ public:
 	void OnRotateByDegree();
 	void OnZoomIn();
 	void OnZoomOut();
+	void OnCyberpunk();
+
+	void OnFreeTempImage();
+	void OnMallocTempImage();
+	void OnFreeMask();
+	double** OnMalloc2DMask(int ksize);
+	void OnAvgBlur();
+	void OnSetAvgMask(int ksize);
+	void OnMallocDoubleImage();
+	void OnFreeDoubleImage();
+	void OnGaussianBlur();
+	void OnSetGaussianMask(int ksize);
+	void OnEmbossImage();
+	void OnPrewittXedge();
+	void OnPrewittYedge();
+	int OnSobleXedge();
+	void OnSobleYedge();
+	void OnLaplacian1dEdge();
+	void OnLaplacian2dEdge();
+	void OnLaplacianOfGaussian();
+	void OnHistStrech();
+	void OnHistEqual();
 };

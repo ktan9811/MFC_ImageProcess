@@ -38,6 +38,19 @@ BEGIN_MESSAGE_MAP(CColorImageProcessView, CView)
 	ON_COMMAND(ID_Rotate_By_Degree, &CColorImageProcessView::OnRotateByDegree)
 	ON_COMMAND(ID_Zoom_In, &CColorImageProcessView::OnZoomIn)
 	ON_COMMAND(ID_Zoom_Out, &CColorImageProcessView::OnZoomOut)
+	ON_COMMAND(ID_CyberPunk, &CColorImageProcessView::OnCyberpunk)
+	ON_COMMAND(ID_Avg_Blur, &CColorImageProcessView::OnAvgBlur)
+	ON_COMMAND(ID_GaussianBlur, &CColorImageProcessView::OnGaussianblur)
+	ON_COMMAND(ID_Emboss_Image, &CColorImageProcessView::OnEmbossImage)
+	ON_COMMAND(ID_PREWITT_XEDGE, &CColorImageProcessView::OnPrewittXedge)
+	ON_COMMAND(ID_PREWITT_YEDGE, &CColorImageProcessView::OnPrewittYedge)
+	ON_COMMAND(ID_SOBLE_YEDGE, &CColorImageProcessView::OnSobleYedge)
+	ON_COMMAND(ID_SOBLE_XEDGE, &CColorImageProcessView::OnSobleXedge)
+	ON_COMMAND(ID_Laplacian_1D_Edge, &CColorImageProcessView::OnLaplacian1dEdge)
+	ON_COMMAND(ID_Laplacian_2D_Edge, &CColorImageProcessView::OnLaplacian2dEdge)
+	ON_COMMAND(ID_Laplacian_Of_Gaussian, &CColorImageProcessView::OnLaplacianOfGaussian)
+	ON_COMMAND(ID_Hist_Strech, &CColorImageProcessView::OnHistStrech)
+	ON_COMMAND(ID_Hist_Equal, &CColorImageProcessView::OnHistEqual)
 END_MESSAGE_MAP()
 
 // CColorImageProcessView 생성/소멸
@@ -64,33 +77,14 @@ BOOL CColorImageProcessView::PreCreateWindow(CREATESTRUCT& cs)
 
 void CColorImageProcessView::OnDraw(CDC* pDC)
 {
-	//CColorImageProcessDoc* pDoc = GetDocument();
-	//ASSERT_VALID(pDoc);
-	//if (!pDoc)
-	//	return;
-
-	//// TODO: 여기에 원시 데이터에 대한 그리기 코드를 추가합니다.
-	//int R, G, B;
-	//for (int i = 0; i < pDoc->m_inH; i++)
-	//	for (int k = 0; k < pDoc->m_inW; k++) {
-	//		R = pDoc->m_inImageR[i][k];
-	//		G = pDoc->m_inImageG[i][k];
-	//		B = pDoc->m_inImageB[i][k];
-	//		pDC->SetPixel(k + 5, i + 5, RGB(R, G, B));
-	//	}
-
-	//for (int i = 0; i < pDoc->m_outH; i++)
-	//	for (int k = 0; k < pDoc->m_outW; k++) {
-	//		R = pDoc->m_outImageR[i][k];
-	//		G = pDoc->m_outImageG[i][k];
-	//		B = pDoc->m_outImageB[i][k];
-	//		pDC->SetPixel(pDoc->m_inW + k + 5 + 5, i + 5, RGB(R, G, B));
-	//	}
-
 	///////////////////
 	/// ** 더블 버퍼링 **
 	///////////////////
 	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (!pDoc)
+		return;
+
 	ASSERT_VALID(pDoc);
 	if (!pDoc)
 		return;
@@ -113,15 +107,34 @@ void CColorImageProcessView::OnDraw(CDC* pDC)
 	pOldBitmap = memDC.SelectObject(&bitmap);
 	memDC.PatBlt(0, 0, pDoc->m_inW, pDoc->m_inH, WHITENESS); // 흰색으로 초기화
 
+
+	// 출력 영상의 크기를 자동 조절
+	double MAXSIZE = 800;  // 필요시 실 모니터 또는 화면의 해상도에 따라서 변경 가능!
+	int inH = pDoc->m_inH;
+	int inW = pDoc->m_inW;
+	double hop = 1.0; // 기본
+
+	if (inH > MAXSIZE || inW > MAXSIZE) {
+		// hop을 새로 계산.
+		if (inW > inH)
+			hop = (inW / MAXSIZE);
+		else
+			hop = (inH / MAXSIZE);
+
+		inW = (int)(inW / hop);
+		inH = (int)(inH / hop);
+	}
+
 	// 메모리 DC에 그리기
-	for (i = 0; i < pDoc->m_inH; i++) {
-		for (k = 0; k < pDoc->m_inW; k++) {
-			R = pDoc->m_inImageR[i][k];
-			G = pDoc->m_inImageG[i][k];
-			B = pDoc->m_inImageB[i][k];
+	for (i = 0; i < inH; i++) {
+		for (k = 0; k < inW; k++) {
+			R = pDoc->m_inImageR[(int)(i * hop)][(int)(k * hop)];
+			G = pDoc->m_inImageG[(int)(i * hop)][(int)(k * hop)];
+			B = pDoc->m_inImageB[(int)(i * hop)][(int)(k * hop)];
 			memDC.SetPixel(k, i, RGB(R, G, B));
 		}
 	}
+
 	// 메모리 DC를 화면 DC에 고속 복사
 	pDC->BitBlt(5, 5, pDoc->m_inW, pDoc->m_inH, &memDC, 0, 0, SRCCOPY);
 
@@ -140,17 +153,32 @@ void CColorImageProcessView::OnDraw(CDC* pDC)
 	pOldBitmap = memDC.SelectObject(&bitmap);
 	memDC.PatBlt(0, 0, pDoc->m_outW, pDoc->m_outH, WHITENESS); // 흰색으로 초기화
 
+	int outH = pDoc->m_outH;
+	int outW = pDoc->m_outW;
+	hop = 1.0; // 기본
+
+	if (outH > MAXSIZE || outW > MAXSIZE) {
+		// hop을 새로 계산.
+		if (outW > outH)
+			hop = (outW / MAXSIZE);
+		else
+			hop = (outH / MAXSIZE);
+
+		outW = (int)(outW / hop);
+		outH = (int)(outH / hop);
+	}
+
 	// 메모리 DC에 그리기
-	for (i = 0; i < pDoc->m_outH; i++) {
-		for (k = 0; k < pDoc->m_outW; k++) {
-			R = pDoc->m_outImageR[i][k];
-			G = pDoc->m_outImageG[i][k];
-			B = pDoc->m_outImageB[i][k];
+	for (i = 0; i < outH; i++) {
+		for (k = 0; k < outW; k++) {
+			R = pDoc->m_outImageR[(int)(i * hop)][(int)(k * hop)];
+			G = pDoc->m_outImageG[(int)(i * hop)][(int)(k * hop)];
+			B = pDoc->m_outImageB[(int)(i * hop)][(int)(k * hop)];
 			memDC.SetPixel(k, i, RGB(R, G, B));
 		}
 	}
 	// 메모리 DC를 화면 DC에 고속 복사
-	pDC->BitBlt(pDoc->m_inW + 10, 5, pDoc->m_outW, pDoc->m_outH, &memDC, 0, 0, SRCCOPY);
+	pDC->BitBlt(inW + 10, 5, pDoc->m_outW, pDoc->m_outH, &memDC, 0, 0, SRCCOPY);
 
 	memDC.SelectObject(pOldBitmap);
 	memDC.DeleteDC();
@@ -319,5 +347,147 @@ void CColorImageProcessView::OnZoomOut()
 	ASSERT_VALID(pDoc);
 
 	pDoc->OnZoomOut();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnCyberpunk()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnCyberpunk();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnAvgBlur()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnAvgBlur();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnGaussianblur()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnGaussianBlur();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnEmbossImage()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnEmbossImage();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnPrewittXedge()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnPrewittXedge();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnPrewittYedge()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnPrewittYedge();
+	Invalidate(TRUE);
+}
+
+void CColorImageProcessView::OnSobleXedge()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int tmep = pDoc->OnSobleXedge();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnSobleYedge()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnSobleYedge();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnLaplacian1dEdge()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnLaplacian1dEdge();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnLaplacian2dEdge()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnLaplacian2dEdge();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnLaplacianOfGaussian()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnLaplacianOfGaussian();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnHistStrech()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnHistStrech();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnHistEqual()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnHistEqual();
 	Invalidate(TRUE);
 }

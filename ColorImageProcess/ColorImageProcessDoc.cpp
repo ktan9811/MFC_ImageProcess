@@ -16,6 +16,9 @@
 
 #include "CConstantDialog.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -262,6 +265,82 @@ void CColorImageProcessDoc::OnMallocOutImage()
 	m_outImageB = OnMalloc2D(m_outH, m_outW);
 }
 
+void CColorImageProcessDoc::OnFreeTempImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	if (m_outImageR != NULL) {
+		OnFree2D(m_tempImageR, m_tempH);
+		OnFree2D(m_tempImageG, m_tempH);
+		OnFree2D(m_tempImageB, m_tempH);
+		m_tempImageR = m_tempImageG = m_tempImageB = NULL;
+		m_tempH = m_tempW = 0;
+	}
+}
+
+void CColorImageProcessDoc::OnMallocTempImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	m_tempImageR = OnMalloc2D(m_tempH, m_tempW);
+	m_tempImageG = OnMalloc2D(m_tempH, m_tempW);
+	m_tempImageB = OnMalloc2D(m_tempH, m_tempW);
+}
+
+void CColorImageProcessDoc::OnFreeMask()
+{
+	// TODO: 여기에 구현 코드 추가.
+	if (m_mask == NULL)
+		return;
+	for (int i = 0; i < m_ksize; i++)
+		delete m_mask[i];
+	delete[] m_mask;
+}
+
+double** CColorImageProcessDoc::OnMalloc2DMask(int ksize)
+{
+	// TODO: 여기에 구현 코드 추가.
+	// TODO: 여기에 구현 코드 추가.
+	double** memory;
+	memory = new double* [ksize];
+	for (int i = 0; i < ksize; i++)
+		memory[i] = new double[ksize];
+	return memory;
+}
+
+void CColorImageProcessDoc::OnMallocDoubleImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	m_doubleImageR = new double* [m_dimH];
+	m_doubleImageG = new double* [m_dimH];
+	m_doubleImageB = new double* [m_dimH];
+	for (int i = 0; i < m_dimH; i++) {
+		m_doubleImageR[i] = new double[m_dimW];
+		m_doubleImageG[i] = new double[m_dimW];
+		m_doubleImageB[i] = new double[m_dimW];
+	}
+}
+
+
+void CColorImageProcessDoc::OnFreeDoubleImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	if (m_doubleImageR == NULL) return;
+	if (m_doubleImageG == NULL) return;
+	if (m_doubleImageB == NULL) return;
+
+	for (int i = 0; i < m_dimH; i++) {
+		delete m_doubleImageR[i];
+		delete m_doubleImageG[i];
+		delete m_doubleImageB[i];
+	}
+	delete[] m_doubleImageR;
+	delete[] m_doubleImageG;
+	delete[] m_doubleImageB;
+}
+
+//for (int i = 0; i < h; i++)
+//	delete memory[i];
+//delete[] memory;
+
 
 void CColorImageProcessDoc::OnEqualmage()
 {
@@ -407,7 +486,7 @@ void CColorImageProcessDoc::OnChangeSaturation()
 	CConstantDialog dlg;
 	if (dlg.DoModal() != IDOK)	return;
 	double val = dlg.m_constant;
-
+	if (val > 0) return;
 	OnFreeOutImage();
 
 	m_outH = m_inH;
@@ -435,7 +514,7 @@ void CColorImageProcessDoc::OnChangeSaturation()
 			/// 채도 조정
 			S = S + val;
 			if (S < 0) S = 0.0;
-			else if (S > 0.99) S = 0.99;
+			//else if (S > 0.99) S = 0.99;
 
 			// HSI --> RGB
 			unsigned char* rgb = HSI2RGB(H, S, I);
@@ -483,7 +562,7 @@ int CColorImageProcessDoc::OnChangeIntensity()
 			/// I 조정
 			I = I + val;
 			if (I < 0) I = 0.0;
-			else if (I > 254.0) I = 254.0;
+			//else if (I > 254.0) I = 254.0;
 
 			// HSI --> RGB
 			unsigned char* rgb = HSI2RGB(H, S, I);
@@ -504,7 +583,7 @@ void CColorImageProcessDoc::OnChangeHue()
 	// 기존 메모리 해제
 	CConstantDialog dlg;
 	if (dlg.DoModal() != IDOK)	return;
-	double val = dlg.m_constant;
+	int val = (int)dlg.m_constant;
 
 	OnFreeOutImage();
 
@@ -532,8 +611,8 @@ void CColorImageProcessDoc::OnChangeHue()
 
 			/// H 조정
 			H = H + val;
-			if (H < 0) H = 0.0 + 360.0;
-			else if (H > 360.0) H = H - 360.0;
+			H = (int)H % 360;
+			if (H < 0.0) H += 360;
 
 			// HSI --> RGB
 			unsigned char* rgb = HSI2RGB(H, S, I);
@@ -640,41 +719,55 @@ void CColorImageProcessDoc::OnRotateByDegree()
 	// TODO: 여기에 구현 코드 추가.
 	CConstantDialog dlg;
 	if (dlg.DoModal() != IDOK)	return;
-	double val = dlg.m_constant;
+	int val = (int)dlg.m_constant;
 
 	OnFreeOutImage();
 
-	m_outH = m_inH;
-	m_outW = m_inW;
+	double tmp_radian = val % 90 * 3.141592 / 180.0;
+	double tmp_radian90 = (90 - val % 90) * 3.141592 / 180.0;
+
+	m_outH = (int)(m_inH * cos(tmp_radian90) + m_inW * cos(tmp_radian));
+	m_outW = (int)(m_inW * cos(tmp_radian) + m_inW * cos(tmp_radian90));
+
 	OnMallocOutImage();
+	double radian = -val * 3.141592 / 180.0;
+
+	m_tempH = m_outH;
+	m_tempW = m_outW;
+	OnMallocTempImage();
 
 	for (int y = 0; y < m_outH; y++)
-		for (int x = 0; x < m_outW; x++) {
-			m_outImageR[y][x] = m_inImageR[y][x];
-			m_outImageG[y][x] = m_inImageG[y][x];
-			m_outImageB[y][x] = m_inImageB[y][x];
+		for (int x = 0; x < m_outW; x++)
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = 255;
+
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++)
+			m_tempImageR[y][x] = m_tempImageG[y][x] = m_tempImageB[y][x] = 255;
+
+	int dx = (m_outH - m_inH) / 2;
+	int dy = (m_outW - m_inW) / 2;
+	for (int i = 0; i < m_inH; i++)
+		for (int k = 0; k < m_inW; k++) {
+			m_tempImageR[i + dx][k + dy] = m_inImageR[i][k];
+			m_tempImageG[i + dx][k + dy] = m_inImageG[i][k];
+			m_tempImageB[i + dx][k + dy] = m_inImageB[i][k];
 		}
-	double radian = -val * 3.141592 / 180.0;
 
 	int cx = m_outH / 2;
 	int cy = m_outW / 2;
 
-	for (int y = 0; y < m_outH; y++) {
-		for (int x = 0; x < m_outW; x++) {
-			int xd = y;
-			int yd = x;
-
-			int xs = (int)(cos(radian) * (xd - cx) + sin(radian) * (yd - cy));
-			int ys = (int)(-sin(radian) * (xd - cx) + cos(radian) * (yd - cy));
-			xs += cx;
-			ys += cy;
-
-			if ((0 <= xs && xs < m_outH) && (0 <= ys && ys < m_outW))
-				m_outImageR[xd][yd] = m_inImageR[xs][ys];
-				m_outImageG[xd][yd] = m_inImageG[xs][ys];
-				m_outImageB[xd][yd] = m_inImageB[xs][ys];
+	for (int i = 0; i < m_outH; i++) {
+		for (int k = 0; k < m_outW; k++) {
+			int oldI = (cos(radian) * (i - cx) + sin(radian) * (k - cy)) + cx;
+			int oldK = (-sin(radian) * (i - cx) + cos(radian) * (k - cy)) + cy;
+			if (((0 <= oldI) && (oldI < m_outH)) && ((0 <= oldK) && (oldK < m_outW))) {
+				m_outImageR[i][k] = m_tempImageR[oldI][oldK];
+				m_outImageG[i][k] = m_tempImageG[oldI][oldK];
+				m_outImageB[i][k] = m_tempImageB[oldI][oldK];
+			}
 		}
 	}
+	OnFreeTempImage();
 }
 
 
@@ -712,4 +805,802 @@ void CColorImageProcessDoc::OnZoomOut()
 			m_outImageB[i][k] = m_inImageB[i * 2][k * 2];
 
 		}
+}
+
+
+void CColorImageProcessDoc::OnCyberpunk()
+{
+	// TODO: 여기에 구현 코드 추가.
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	const int cp_wid = 5;
+	const int cp_color = 0;
+
+	for (int i = 0; i < m_outH; i++)
+		for (int k = 0; k < m_outW; k++) {
+			m_outImageR[i][k] = (m_inImageR[i][k] < 255 - cp_color) ? m_inImageR[i][k] + cp_color : 255;
+			m_outImageG[i][k] = m_inImageG[i][k];
+			m_outImageB[i][k] = m_inImageB[i][k];
+		}
+
+	for (int i = 0; i < m_outH; i++)
+		for (int k = 0; k < m_outW - cp_wid; k++)
+			m_outImageG[i][k + cp_wid] = m_inImageG[i][k];
+
+	for (int i = 0; i < m_outH; i++)
+		for (int k = 0; k < m_outW - cp_wid; k++)
+			m_outImageB[i][k + cp_wid] = (m_inImageB[i][k] < 255 - cp_color) ? m_inImageB[i][k] + cp_color : 255;
+}
+
+void CColorImageProcessDoc::OnAvgBlur()
+{
+	// TODO: 여기에 구현 코드 추가.
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return;
+	int val = (int)dlg.m_constant;
+
+	// 마스크 생성
+	if (val < 3) val = 3;
+	if (val > 9) val = 9;
+	if(val % 2 == 0) val++;
+
+	m_ksize = val;
+	m_mask = OnMalloc2DMask(m_ksize);
+	OnSetAvgMask(m_ksize);
+
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+			m_doubleImageG[y][x] = 127;
+			m_doubleImageB[y][x] = 127;
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_inImageR[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+			m_doubleImageG[y][x] = m_inImageG[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+			m_doubleImageB[y][x] = m_inImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR, SB, SG;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = SB = SG = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += m_mask[i][j] * m_doubleImageR[y + i][x + j];
+					SG += m_mask[i][j] * m_doubleImageG[y + i][x + j];
+					SB += m_mask[i][j] * m_doubleImageB[y + i][x + j];
+				}
+			}
+			if (SR < 0.0) m_outImageR[y][x] = 0;
+			else if (SR > 255.0) m_outImageR[y][x] = 255;
+			else m_outImageR[y][x] = (unsigned char)SR;
+
+			if (SG < 0.0) m_outImageG[y][x] = 0;
+			else if (SG > 255.0) m_outImageG[y][x] = 255;
+			else m_outImageG[y][x] = (unsigned char)SG;
+
+			if (SB < 0.0) m_outImageB[y][x] = 0;
+			else if (SB > 255.0) m_outImageB[y][x] = 255;
+			else m_outImageB[y][x] = (unsigned char)SB;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+}
+
+
+void CColorImageProcessDoc::OnSetAvgMask(int ksize)
+{
+	// TODO: 여기에 구현 코드 추가.
+	for (int i = 0; i < ksize; i++)
+		for (int k = 0; k < ksize; k++)
+			m_mask[i][k] = 1.0 / ksize / ksize;
+}
+
+void CColorImageProcessDoc::OnGaussianBlur()
+{
+	// TODO: 여기에 구현 코드 추가.
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return;
+	int val = (int)dlg.m_constant;
+
+	// 마스크 생성
+	if (val < 3) val = 3;
+	if (val > 9) val = 9;
+	if (val % 2 == 0) val++;
+
+	m_ksize = val;
+	m_mask = OnMalloc2DMask(m_ksize);
+	OnSetGaussianMask(m_ksize);
+
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+			m_doubleImageG[y][x] = 127;
+			m_doubleImageB[y][x] = 127;
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_inImageR[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+			m_doubleImageG[y][x] = m_inImageG[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+			m_doubleImageB[y][x] = m_inImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR, SB, SG;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = SB = SG = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += m_mask[i][j] * m_doubleImageR[y + i][x + j];
+					SG += m_mask[i][j] * m_doubleImageG[y + i][x + j];
+					SB += m_mask[i][j] * m_doubleImageB[y + i][x + j];
+				}
+			}
+			if (SR < 0.0) m_outImageR[y][x] = 0;
+			else if (SR > 255.0) m_outImageR[y][x] = 255;
+			else m_outImageR[y][x] = (unsigned char)SR;
+
+			if (SG < 0.0) m_outImageG[y][x] = 0;
+			else if (SG > 255.0) m_outImageG[y][x] = 255;
+			else m_outImageG[y][x] = (unsigned char)SG;
+
+			if (SB < 0.0) m_outImageB[y][x] = 0;
+			else if (SB > 255.0) m_outImageB[y][x] = 255;
+			else m_outImageB[y][x] = (unsigned char)SB;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+}
+
+
+void CColorImageProcessDoc::OnSetGaussianMask(int ksize)
+{
+	// TODO: 여기에 구현 코드 추가.
+	for (int y = 0 - int(m_ksize / 2); y < m_ksize / 2 + 1; y++)
+		for (int x = 0 - int(m_ksize / 2); x < m_ksize / 2 + 1; x++) {
+			m_mask[y + int(m_ksize / 2)][x + int(m_ksize / 2)] = 
+				(1.0 / (2.0 * (M_PI))) * pow(M_E, (0.0 - ((double)x * x / 2 + (double)y * y / 2.0)));
+		}
+}
+
+void CColorImageProcessDoc::OnEmbossImage()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 마스크 생성
+	double mask[3][3] = { {1, 0, -1}, {1, 0, -1}, {1, 0, -1} };
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_ksize = 3;
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+		}
+	
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			m_outImageB[y][x] = (unsigned char)((m_inImageR[y][x] + m_inImageG[y][x] + m_inImageB[y][x]) / 3);
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_outImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += mask[i][j] * m_doubleImageR[y + i][x + j];
+				}
+			}
+			SR += 127;
+			if (SR > 255) SR = 255;
+			else if (SR < 0) SR = 0;
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = SR;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+}
+
+void CColorImageProcessDoc::OnPrewittXedge()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 마스크 생성
+	double mask[3][3] = { {-1, -1, -1}, {0, 0, 0}, {1, 1, 1} };
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_ksize = 3;
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+		}
+
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			m_outImageB[y][x] = (unsigned char)((m_inImageR[y][x] + m_inImageG[y][x] + m_inImageB[y][x]) / 3);
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_outImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += mask[i][j] * m_doubleImageR[y + i][x + j];
+				}
+			}
+			if (SR > 255) SR = 255;
+			else if (SR < 0) SR = 0;
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = SR;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+}
+
+
+void CColorImageProcessDoc::OnPrewittYedge()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 마스크 생성
+	double mask[3][3] = { {-1, 0, 1}, {-1, 0, 1}, {-1, 0, 1} };
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_ksize = 3;
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+		}
+
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			m_outImageB[y][x] = (unsigned char)((m_inImageR[y][x] + m_inImageG[y][x] + m_inImageB[y][x]) / 3);
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_outImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += mask[i][j] * m_doubleImageR[y + i][x + j];
+				}
+			}
+			if (SR > 255) SR = 255;
+			else if (SR < 0) SR = 0;
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = SR;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+}
+
+
+int CColorImageProcessDoc::OnSobleXedge()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 마스크 생성
+	double mask[3][3] = { {-1, -2, -1}, {0, 0, 0}, {1, 2, 1} };
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_ksize = 3;
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+		}
+
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			m_outImageB[y][x] = (unsigned char)((m_inImageR[y][x] + m_inImageG[y][x] + m_inImageB[y][x]) / 3);
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_outImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += mask[i][j] * m_doubleImageR[y + i][x + j];
+				}
+			}
+			if (SR > 255) SR = 255;
+			else if (SR < 0) SR = 0;
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = SR;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+	return 0;
+}
+
+
+void CColorImageProcessDoc::OnSobleYedge()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 마스크 생성
+	double mask[3][3] = { {-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1} };
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_ksize = 3;
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+		}
+
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			m_outImageB[y][x] = (unsigned char)((m_inImageR[y][x] + m_inImageG[y][x] + m_inImageB[y][x]) / 3);
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_outImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += mask[i][j] * m_doubleImageR[y + i][x + j];
+				}
+			}
+			if (SR > 255) SR = 255;
+			else if (SR < 0) SR = 0;
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = SR;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+}
+
+
+void CColorImageProcessDoc::OnLaplacian1dEdge()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 마스크 생성
+	double mask[3][3] = { {0, 1, 0}, {1, -4, 1}, {0, 1, 0} };
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_ksize = 3;
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+		}
+
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			m_outImageB[y][x] = (unsigned char)((m_inImageR[y][x] + m_inImageG[y][x] + m_inImageB[y][x]) / 3);
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_outImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += mask[i][j] * m_doubleImageR[y + i][x + j];
+				}
+			}
+			if (SR > 255) SR = 255;
+			else if (SR < 0) SR = 0;
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = SR;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+}
+
+
+void CColorImageProcessDoc::OnLaplacian2dEdge()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 마스크 생성
+	double mask[3][3] = { {1, 1, 1}, {1, -8, 1}, {1, 1, 1} };
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_ksize = 3;
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+		}
+
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			m_outImageB[y][x] = (unsigned char)((m_inImageR[y][x] + m_inImageG[y][x] + m_inImageB[y][x]) / 3);
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_outImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += mask[i][j] * m_doubleImageR[y + i][x + j];
+				}
+			}
+			if (SR > 255) SR = 255;
+			else if (SR < 0) SR = 0;
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = SR;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+}
+
+
+void CColorImageProcessDoc::OnLaplacianOfGaussian()
+{
+	// TODO: 여기에 구현 코드 추가.
+	CConstantDialog dlg;
+	if (dlg.DoModal() != IDOK)	return;
+	int val = (int)dlg.m_constant;
+
+	// 마스크 생성
+	if (val < 3) val = 3;
+	if (val > 9) val = 9;
+	if (val % 2 == 0) val++;
+
+	m_ksize = val;
+	m_mask = OnMalloc2DMask(m_ksize);
+	OnSetGaussianMask(m_ksize);
+
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+			m_doubleImageG[y][x] = 127;
+			m_doubleImageB[y][x] = 127;
+		}
+
+	for (int y = int(m_ksize / 2); y < m_inH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_inW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_inImageR[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+			m_doubleImageG[y][x] = m_inImageG[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+			m_doubleImageB[y][x] = m_inImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	double SR, SB, SG;
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = SB = SG = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += m_mask[i][j] * m_doubleImageR[y + i][x + j];
+					SG += m_mask[i][j] * m_doubleImageG[y + i][x + j];
+					SB += m_mask[i][j] * m_doubleImageB[y + i][x + j];
+				}
+			}
+			if (SR < 0.0) m_outImageR[y][x] = 0;
+			else if (SR > 255.0) m_outImageR[y][x] = 255;
+			else m_outImageR[y][x] = (unsigned char)SR;
+
+			if (SG < 0.0) m_outImageG[y][x] = 0;
+			else if (SG > 255.0) m_outImageG[y][x] = 255;
+			else m_outImageG[y][x] = (unsigned char)SG;
+
+			if (SB < 0.0) m_outImageB[y][x] = 0;
+			else if (SB > 255.0) m_outImageB[y][x] = 255;
+			else m_outImageB[y][x] = (unsigned char)SB;
+		}
+
+	// 임시 그림 free
+	OnFreeMask();
+	OnFreeDoubleImage();
+
+	// 이미지 복사
+	OnFreeTempImage();
+
+	m_tempH = m_outH;
+	m_tempW = m_outW;
+	OnMallocTempImage();
+
+	for(int y = 0; y < m_tempH; y++)
+		for (int x = 0; x < m_tempW; x++) {
+			m_tempImageR[y][x] = m_outImageR[y][x];
+			m_tempImageG[y][x] = m_outImageG[y][x];
+			m_tempImageB[y][x] = m_outImageB[y][x];
+		}
+
+	// 마스크 생성
+	double mask[3][3] = { {1, 1, 1}, {1, -8, 1}, {1, 1, 1} };
+
+	// 출력 생성
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	// 임시 이미지 생성
+	m_ksize = 3;
+	m_dimH = m_inH + m_ksize - 1;
+	m_dimW = m_inW + m_ksize - 1;
+	OnMallocDoubleImage();
+
+	for (int y = 0; y < m_dimH; y++)
+		for (int x = 0; x < m_dimW; x++) {
+			m_doubleImageR[y][x] = 127;
+		}
+
+	for (int y = 0; y < m_tempH; y++)
+		for (int x = 0; x < m_tempW; x++) {
+			m_outImageB[y][x] = (unsigned char)((m_tempImageR[y][x] + m_tempImageG[y][x] + m_tempImageB[y][x]) / 3);
+		}
+
+	for (int y = int(m_ksize / 2); y < m_tempH + (int)(m_ksize / 2); y++)
+		for (int x = int(m_ksize / 2); x < m_tempW + (int)(m_ksize / 2); x++) {
+			m_doubleImageR[y][x] = m_outImageB[y - (int)(m_ksize / 2)][x - (int)(m_ksize / 2)];
+		}
+
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			SR = 0.0;
+			for (int i = 0; i < m_ksize; i++) {
+				for (int j = 0; j < m_ksize; j++) {
+					SR += mask[i][j] * m_doubleImageR[y + i][x + j];
+				}
+			}
+			if (SR > 255) SR = 255;
+			else if (SR < 0) SR = 0;
+			m_outImageR[y][x] = m_outImageG[y][x] = m_outImageB[y][x] = SR;
+		}
+
+	// 임시 그림 free
+	OnFreeDoubleImage();
+}
+
+
+
+void CColorImageProcessDoc::OnHistStrech()
+{
+	// TODO: 여기에 구현 코드 추가.
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	unsigned char rHIGH = 0;
+	unsigned char rLOW = 255;
+	unsigned char gHIGH = 0;
+	unsigned char gLOW = 255;
+	unsigned char bHIGH = 0;
+	unsigned char bLOW = 255;
+
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			if (m_inImageR[y][x] > rHIGH) rHIGH = m_inImageR[y][x];
+			if (m_inImageR[y][x] < rLOW) rLOW = m_inImageR[y][x];
+
+			if (m_inImageG[y][x] > gHIGH) gHIGH = m_inImageG[y][x];
+			if (m_inImageG[y][x] < gLOW) gLOW = m_inImageG[y][x];
+
+			if (m_inImageB[y][x] > bHIGH) bHIGH = m_inImageB[y][x];
+			if (m_inImageB[y][x] < bLOW) bLOW = m_inImageB[y][x];
+		}
+
+
+
+	for (int y = 0; y < m_outH; y++)
+		for (int x = 0; x < m_outW; x++) {
+			m_outImageR[y][x] = (unsigned const)((m_inImageR[y][x] - rLOW) / (float)(rHIGH - rLOW) * 255);
+			m_outImageG[y][x] = (unsigned const)((m_inImageG[y][x] - gLOW) / (float)(rHIGH - gLOW) * 255);
+			m_outImageB[y][x] = (unsigned const)((m_inImageB[y][x] - bLOW) / (float)(rHIGH - bLOW) * 255);
+		}
+}
+
+
+void CColorImageProcessDoc::OnHistEqual()
+{
+	// TODO: 여기에 구현 코드 추가.
+	OnFreeOutImage();
+
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+
+	int HistR[256] = { 0, };
+	int HistG[256] = { 0, };
+	int HistB[256] = { 0, };
+
+	int HistSumR[256] = { 0, };
+	int HistSumG[256] = { 0, };
+	int HistSumB[256] = { 0, };
+
+	for (int y = 0; y < m_inH; y++)
+		for (int x = 0; x < m_inW; x++) {
+			HistR[m_inImageR[y][x]]++;
+			HistG[m_inImageG[y][x]]++;
+			HistB[m_inImageB[y][x]]++;
+		}
+
+	for (int i = 1; i < 256; i++) {
+		HistSumR[i] = HistSumR[i - 1] + HistR[i];
+		HistSumG[i] = HistSumG[i - 1] + HistG[i];
+		HistSumB[i] = HistSumB[i - 1] + HistB[i];
+	}
+
+	double HistNormR[256] = { 1.0, };
+	double HistNormG[256] = { 1.0, };
+	double HistNormB[256] = { 1.0, };
+
+	for (int i = 0; i < 256; i++)
+		HistNormR[i] = HistNormB[i] = HistNormG[i] = 1.0;
+
+	for (int i = 0; i < 256; i++) {
+		HistNormR[i] = HistSumR[i] * (1.0 / (m_inH * m_inW)) * 255.0;
+		HistNormG[i] = HistSumG[i] * (1.0 / (m_inH * m_inW)) * 255.0;
+		HistNormB[i] = HistSumB[i] * (1.0 / (m_inH * m_inW)) * 255.0;
+	}
+
+	for (int y = 0; y < m_outH; y++) {
+		for (int x = 0; x < m_outW; x++) {
+			m_outImageR[y][x] = (unsigned char)HistNormR[m_inImageR[y][x]];
+			m_outImageG[y][x] = (unsigned char)HistNormG[m_inImageG[y][x]];
+			m_outImageB[y][x] = (unsigned char)HistNormB[m_inImageB[y][x]];
+		}
+	}
 }

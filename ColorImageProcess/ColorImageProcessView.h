@@ -52,6 +52,19 @@ public:
 	afx_msg void OnRotateByDegree();
 	afx_msg void OnZoomIn();
 	afx_msg void OnZoomOut();
+	afx_msg void OnCyberpunk();
+	afx_msg void OnAvgBlur();
+	afx_msg void OnGaussianblur();
+	afx_msg void OnEmbossImage();
+	afx_msg void OnPrewittXedge();
+	afx_msg void OnPrewittYedge();
+	afx_msg void OnSobleYedge();
+	afx_msg void OnSobleXedge();
+	afx_msg void OnLaplacian1dEdge();
+	afx_msg void OnLaplacian2dEdge();
+	afx_msg void OnLaplacianOfGaussian();
+	afx_msg void OnHistStrech();
+	afx_msg void OnHistEqual();
 };
 
 #ifndef _DEBUG  // ColorImageProcessView.cpp의 디버그 버전
