@@ -15,6 +15,7 @@
 #include <propkey.h>
 
 #include "CConstantDialog.h"
+#include "CGetString.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -1050,7 +1051,6 @@ void CColorImageProcessDoc::OnEmbossImage()
 		}
 
 	// 임시 그림 free
-	OnFreeMask();
 	OnFreeDoubleImage();
 }
 
@@ -1103,7 +1103,6 @@ void CColorImageProcessDoc::OnPrewittXedge()
 		}
 
 	// 임시 그림 free
-	OnFreeMask();
 	OnFreeDoubleImage();
 }
 
@@ -1157,7 +1156,6 @@ void CColorImageProcessDoc::OnPrewittYedge()
 		}
 
 	// 임시 그림 free
-	OnFreeMask();
 	OnFreeDoubleImage();
 }
 
@@ -1211,7 +1209,6 @@ int CColorImageProcessDoc::OnSobleXedge()
 		}
 
 	// 임시 그림 free
-	OnFreeMask();
 	OnFreeDoubleImage();
 	return 0;
 }
@@ -1266,7 +1263,6 @@ void CColorImageProcessDoc::OnSobleYedge()
 		}
 
 	// 임시 그림 free
-	OnFreeMask();
 	OnFreeDoubleImage();
 }
 
@@ -1320,7 +1316,6 @@ void CColorImageProcessDoc::OnLaplacian1dEdge()
 		}
 
 	// 임시 그림 free
-	OnFreeMask();
 	OnFreeDoubleImage();
 }
 
@@ -1374,7 +1369,6 @@ void CColorImageProcessDoc::OnLaplacian2dEdge()
 		}
 
 	// 임시 그림 free
-	OnFreeMask();
 	OnFreeDoubleImage();
 }
 

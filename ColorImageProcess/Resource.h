@@ -7,9 +7,11 @@
 #define IDR_MAINFRAME                   128
 #define IDR_ColorImageProcessTYPE       130
 #define IDD_Double_Input                310
-#define IDD_DIALOG1                     312
+#define IDD_GET_STRING                  314
+#define IDI_ICON1                       317
 #define IDC_EDIT1                       1000
 #define IDC_EDIT_CONSTANT               1000
+#define IDC_EDIT_STRING                 1000
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_Equalmage                    32773
@@ -83,7 +85,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        314
+#define _APS_NEXT_RESOURCE_VALUE        318
 #define _APS_NEXT_COMMAND_VALUE         32844
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           310

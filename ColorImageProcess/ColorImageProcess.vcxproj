@@ -184,6 +184,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CConstantDialog.h" />
+    <ClInclude Include="CGetString.h" />
     <ClInclude Include="ColorImageProcess.h" />
     <ClInclude Include="ColorImageProcessDoc.h" />
     <ClInclude Include="ColorImageProcessView.h" />
@@ -195,6 +196,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CConstantDialog.cpp" />
+    <ClCompile Include="CGetString.cpp" />
     <ClCompile Include="ColorImageProcess.cpp" />
     <ClCompile Include="ColorImageProcessDoc.cpp" />
     <ClCompile Include="ColorImageProcessView.cpp" />
@@ -215,6 +217,7 @@
   <ItemGroup>
     <Image Include="res\ColorImageProcess.ico" />
     <Image Include="res\ColorImageProcessDoc.ico" />
+    <Image Include="res\nyancat.ico" />
     <Image Include="res\Toolbar.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

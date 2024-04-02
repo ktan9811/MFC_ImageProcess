@@ -178,7 +178,7 @@ void CColorImageProcessView::OnDraw(CDC* pDC)
 		}
 	}
 	// 메모리 DC를 화면 DC에 고속 복사
-	pDC->BitBlt(inW + 10, 5, pDoc->m_outW, pDoc->m_outH, &memDC, 0, 0, SRCCOPY);
+	pDC->BitBlt(inW + 20, 5, pDoc->m_outW, pDoc->m_outH, &memDC, 0, 0, SRCCOPY);
 
 	memDC.SelectObject(pOldBitmap);
 	memDC.DeleteDC();
