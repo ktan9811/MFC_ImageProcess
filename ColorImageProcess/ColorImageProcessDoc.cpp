@@ -1598,3 +1598,27 @@ void CColorImageProcessDoc::OnHistEqual()
 		}
 	}
 }
+
+
+void CColorImageProcessDoc::OnDeResolution()
+{
+	// TODO: 여기에 구현 코드 추가.
+	// 기존 메모리 해제
+	OnFreeOutImage();
+
+	// 메모리 할당
+	m_outH = m_inH;
+	m_outW = m_inW;
+	OnMallocOutImage();
+	volatile double temp = 64.5;
+
+	// 영상처리 알고리즘
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			m_outImageR[i][k] = (unsigned char)(m_inImageR[i][k] / temp) * temp;
+			m_outImageG[i][k] = (unsigned char)(m_inImageG[i][k] / temp) * temp;
+			m_outImageB[i][k] = (unsigned char)(m_inImageB[i][k] / temp) * temp;
+		}
+	}
+
+}

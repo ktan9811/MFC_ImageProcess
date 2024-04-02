@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CColorImageProcessView, CView)
 	ON_COMMAND(ID_Laplacian_Of_Gaussian, &CColorImageProcessView::OnLaplacianOfGaussian)
 	ON_COMMAND(ID_Hist_Strech, &CColorImageProcessView::OnHistStrech)
 	ON_COMMAND(ID_Hist_Equal, &CColorImageProcessView::OnHistEqual)
+	ON_COMMAND(ID_De_Resolution, &CColorImageProcessView::OnDeResolution)
 END_MESSAGE_MAP()
 
 // CColorImageProcessView 생성/소멸
@@ -489,5 +490,16 @@ void CColorImageProcessView::OnHistEqual()
 	ASSERT_VALID(pDoc);
 
 	pDoc->OnHistEqual();
+	Invalidate(TRUE);
+}
+
+
+void CColorImageProcessView::OnDeResolution()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CColorImageProcessDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	pDoc->OnDeResolution();
 	Invalidate(TRUE);
 }

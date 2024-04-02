@@ -116,4 +116,5 @@ public:
 	void OnLaplacianOfGaussian();
 	void OnHistStrech();
 	void OnHistEqual();
+	void OnDeResolution();
 };

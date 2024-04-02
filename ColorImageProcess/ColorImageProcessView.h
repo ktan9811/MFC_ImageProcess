@@ -65,6 +65,7 @@ public:
 	afx_msg void OnLaplacianOfGaussian();
 	afx_msg void OnHistStrech();
 	afx_msg void OnHistEqual();
+	afx_msg void OnDeResolution();
 };
 
 #ifndef _DEBUG  // ColorImageProcessView.cpp의 디버그 버전
