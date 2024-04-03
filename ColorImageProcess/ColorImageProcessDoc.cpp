@@ -487,7 +487,7 @@ void CColorImageProcessDoc::OnChangeSaturation()
 	CConstantDialog dlg;
 	if (dlg.DoModal() != IDOK)	return;
 	double val = dlg.m_constant;
-	if (val > 0) return;
+
 	OnFreeOutImage();
 
 	m_outH = m_inH;
@@ -515,6 +515,7 @@ void CColorImageProcessDoc::OnChangeSaturation()
 			/// 채도 조정
 			S = S + val;
 			if (S < 0) S = 0.0;
+			if (S > 1.0) S = 1.0;
 			//else if (S > 0.99) S = 0.99;
 
 			// HSI --> RGB
@@ -563,7 +564,7 @@ int CColorImageProcessDoc::OnChangeIntensity()
 			/// I 조정
 			I = I + val;
 			if (I < 0) I = 0.0;
-			//else if (I > 254.0) I = 254.0;
+			if (I > 255) I = 255.0;
 
 			// HSI --> RGB
 			unsigned char* rgb = HSI2RGB(H, S, I);
@@ -818,23 +819,29 @@ void CColorImageProcessDoc::OnCyberpunk()
 	m_outW = m_inW;
 	OnMallocOutImage();
 
-	const int cp_wid = 5;
+	const int cp_wid = 3;
 	const int cp_color = 0;
+
 
 	for (int i = 0; i < m_outH; i++)
 		for (int k = 0; k < m_outW; k++) {
-			m_outImageR[i][k] = (m_inImageR[i][k] < 255 - cp_color) ? m_inImageR[i][k] + cp_color : 255;
+			m_outImageR[i][k] = m_inImageR[i][k];
 			m_outImageG[i][k] = m_inImageG[i][k];
 			m_outImageB[i][k] = m_inImageB[i][k];
 		}
 
 	for (int i = 0; i < m_outH; i++)
-		for (int k = 0; k < m_outW - cp_wid; k++)
+		for (int k = 0; k < m_outW - cp_wid; k++) {
+			m_outImageR[i][k + cp_wid] = m_inImageR[i][k];
 			m_outImageG[i][k + cp_wid] = m_inImageG[i][k];
+		}
 
-	for (int i = 0; i < m_outH; i++)
-		for (int k = 0; k < m_outW - cp_wid; k++)
-			m_outImageB[i][k + cp_wid] = (m_inImageB[i][k] < 255 - cp_color) ? m_inImageB[i][k] + cp_color : 255;
+		for (int i = 0; i < m_outH; i++)
+			for (int k = cp_wid; k < m_outW; k++) {
+				m_outImageG[i][k-cp_wid] = m_inImageG[i][k];
+				m_outImageB[i][k-cp_wid] = m_inImageB[i][k];
+			}
+
 }
 
 void CColorImageProcessDoc::OnAvgBlur()
@@ -1610,7 +1617,8 @@ void CColorImageProcessDoc::OnDeResolution()
 	m_outH = m_inH;
 	m_outW = m_inW;
 	OnMallocOutImage();
-	volatile double temp = 64.5;
+	volatile double temp = 86;
+	int val = 83;
 
 	// 영상처리 알고리즘
 	for (int i = 0; i < m_inH; i++) {
@@ -1618,6 +1626,16 @@ void CColorImageProcessDoc::OnDeResolution()
 			m_outImageR[i][k] = (unsigned char)(m_inImageR[i][k] / temp) * temp;
 			m_outImageG[i][k] = (unsigned char)(m_inImageG[i][k] / temp) * temp;
 			m_outImageB[i][k] = (unsigned char)(m_inImageB[i][k] / temp) * temp;
+		}
+	}
+	for (int i = 0; i < m_inH; i++) {
+		for (int k = 0; k < m_inW; k++) {
+			if (m_outImageR[i][k] != 0)
+				if (m_outImageR[i][k] <= 255 - val) m_outImageR[i][k] += val;
+			if (m_outImageG[i][k] != 0)
+				if (m_outImageG[i][k] <= 255 - val) m_outImageG[i][k] += val;
+			if (m_outImageB[i][k] != 0)
+				if (m_outImageB[i][k] <= 255 - val) m_outImageB[i][k] += val;
 		}
 	}
 
