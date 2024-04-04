@@ -1,11 +1,7 @@
-# MyImageProcess Summary KOR
-
-MyImageProcess 프로젝트에서 진행한 자체제작 C / python 기반의 영상처리 프로그램의 요약본
-
-<img src = "https://github.com/ktan9811/MFC_ImageProcess/assets/86091469/da8b9ecd-fd3e-42c0-bbe8-554eb9ced7cf">
-
-
 # ColorImageProcess Summary KOR
+
+
+이전 프로젝트 링크 "https://github.com/ktan9811/GrayScale_ImageProcess"
 
 ColorImageProcess 프로젝트에서 진행한 자체제작 Cpp / MFC 기반의 영상처리 프로그램의 요약본
 
