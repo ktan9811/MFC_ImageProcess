@@ -2,8 +2,7 @@
 
 
 <summary>이전 프로젝트 링크</summary>
-
-    https://github.com/ktan9811/GrayScale_ImageProcess
+https://github.com/ktan9811/GrayScale_ImageProcess
 
 ColorImageProcess 프로젝트에서 진행한 자체제작 Cpp / MFC 기반의 영상처리 프로그램의 요약본
 
